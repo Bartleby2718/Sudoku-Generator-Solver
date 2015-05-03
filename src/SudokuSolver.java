@@ -129,15 +129,74 @@ public class SudokuSolver {
         return list;
     }
 
+    public static int[][] processInput(String fileName, int square, boolean samurai) throws FileNotFoundException {
+    	int squareRoot = Math.round((long) Math.sqrt(square));
+        Scanner fileScanner = new Scanner(new File(fileName));
+        int[][] grid;
+        if (!samurai) {
+        	grid = new int[square][square];
+	        int i = 0;
+	        while (fileScanner.hasNextLine()) {
+	            // Trim leading/trailing whitespace
+	            String line = fileScanner.nextLine().trim();
+	            if (line.length() == 0)
+	                continue;
+	            String[] data = line.split("   ");
+	            for (int j = 0; j < squareRoot; j++) {
+	                String[] data2 = data[j].split(" ");
+	                for (int k = 0; k < squareRoot; k++)
+	                    grid[i][squareRoot * j + k] = Integer.parseInt(data2[k]);
+	            }
+	            i++;
+	        }
+        }
+        else {
+        	grid = new int[2 * square + squareRoot][2 * square + squareRoot];
+	        int i = 0;
+	        while (fileScanner.hasNextLine()) {
+	            // Trim leading/trailing whitespace
+	            String line = fileScanner.nextLine().trim();
+	            if (line.length() == 0)
+	                continue;
+	            String[] data = line.split("   ");
+	            for (int j = 0; j < data.length; j++) {
+	                String[] data2 = data[j].split(" ");
+	                for (int k = 0; k < squareRoot; k++) {
+	                	if (data2[k].equals("b")) // Blank indicator
+	                		grid[i][squareRoot * j + k] = -1;
+	                	else
+	                		grid[i][squareRoot * j + k] = Integer.parseInt(data2[k]);
+	                }
+	            }
+	            i++;
+	        }
+        }
+        fileScanner.close();
+        return grid;
+    }
+    
     public static void main(String[] args) throws FileNotFoundException {
         Scanner keyboard = new Scanner(System.in);
         int square, squareRoot;
+        boolean samurai = false;
         do {
             System.out.print("Enter a perfect square: ");
             square = keyboard.nextInt();
             squareRoot = Math.round((long) Math.sqrt(square));
             if (square == squareRoot * squareRoot)
                 break;
+        } while (true);
+        do {
+            System.out.print("Is this Samurai Sudoku? (y/n): ");
+            String answer = keyboard.next();
+            if (answer.equalsIgnoreCase("y")) {
+            	samurai = true;
+                break;
+            }
+            else if (answer.equalsIgnoreCase("n")) {
+            	samurai = false;
+            	break;
+            }
         } while (true);
         String fileName;
         do {
@@ -146,28 +205,12 @@ public class SudokuSolver {
         } while (!new File(fileName).exists());
         System.out.println("Now look at the pop-up!");
         keyboard.close();
-        int[][] grid = new int[square][square];
-        Scanner fileScanner = new Scanner(new File(fileName));
-        int i = 0;
-        while (fileScanner.hasNextLine()) {
-            // Trim leading/trailing whitespace
-            String line = fileScanner.nextLine().trim();
-            if (line.length() == 0)
-                continue;
-            String[] data = line.split("   ");
-            for (int j = 0; j < squareRoot; j++) {
-                String[] data2 = data[j].split(" ");
-                for (int k = 0; k < squareRoot; k++)
-                    grid[i][squareRoot * j + k] = Integer.parseInt(data2[k]);
-            }
-            i++;
-        }
-        fileScanner.close();
+        int[][] grid = processInput(fileName, square, samurai);
         JFrame frame = new JFrame("Sudoku Solver");
         frame.setSize(500, 500);
         frame.setLocation(200, 100);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setContentPane(new Panel(grid));
+        frame.setContentPane(new Panel(grid, samurai, square));
         frame.setVisible(true);
     }
 }
