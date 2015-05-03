@@ -12,11 +12,15 @@ public class Panel extends JPanel {
     private JPanel gridSpace, buttonSpace;
     private int[][] grid;
     private int length; // Total length of grid
+    private int square;
     private ArrayList<JTextField> textBoxes;
+    private boolean samurai;
 
-    public Panel(int[][] grid) {
+    public Panel(int[][] grid, boolean samurai, int square) {
         setLayout(new BorderLayout());
         this.grid = grid;
+        this.samurai = samurai;
+        this.square = square;
         textBoxes = new ArrayList<JTextField>();
         length = grid.length;
         solve = new JButton("Solve Puzzle");
@@ -44,10 +48,13 @@ public class Panel extends JPanel {
         gridSpace.removeAll();
         for (int i = 0; i < length; i++)
             for (int j = 0; j < length; j++) {
+            	JTextField tf = new JTextField();
                 String text = "";
-                if (puzzle[i][j] != 0)
+                if (puzzle[i][j] == -1)
+                	tf.setBackground(Color.BLACK);
+                else if (puzzle[i][j] != 0)
                     text += puzzle[i][j];
-                JTextField tf = new JTextField(text);
+                tf.setText(text);
                 textBoxes.add(tf);
                 gridSpace.add(tf);
             }
@@ -58,6 +65,8 @@ public class Panel extends JPanel {
     public int getValueAt(int i, int j) {
         if (i * length + j >= textBoxes.size())
             return 0;
+        if (grid[i][j] == -1)
+        	return -1;
         String str = textBoxes.get(i * length + j).getText();
         if (str.equals(""))
             return 0;
@@ -69,6 +78,15 @@ public class Panel extends JPanel {
             for (int j = 0; j < length; j++)
                 grid[i][j] = getValueAt(i, j);
     }
+    
+    // Returns Sudoku puzzle within the Samurai Sudoku with top left corner (i,j)
+    public int[][] subSudoku(int i, int j) {
+    	int[][] subSudoku = new int[square][square];
+    	for (int x = 0; x < square; x++)
+    		for (int y = 0; y < square; y++)
+    			subSudoku[x][y] = grid[x + i][y + j];
+    	return subSudoku;
+    }
 
     private class solveListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
@@ -77,18 +95,52 @@ public class Panel extends JPanel {
             Date startTime = new Date();
             System.out.println("Started at " + startTime);
             // Run SudokuSolver
-            int[][] solution = SudokuSolver.solve(grid);
+            //int[][] solution = null;
+            if (!samurai)
+            	grid = SudokuSolver.solve(grid);
+            else {
+            	int root = (int)Math.sqrt(square);
+            	int[][] solution1 = SudokuSolver.solve(subSudoku(0, 0));
+            	for (int i = 0; i < square; i++)
+            		for (int j = 0; j < square; j++)
+            			grid[i][j] = solution1[i][j];
+            	int[][] solution2 = SudokuSolver.solve(subSudoku(0, square + root));
+            	for (int i = 0; i < square; i++)
+            		for (int j = 0; j < square; j++)
+            			grid[i][j + square + root] = solution2[i][j];
+            	int[][] solution4 = SudokuSolver.solve(subSudoku(square + root, 0));
+            	for (int i = 0; i < square; i++)
+            		for (int j = 0; j < square; j++)
+            			grid[i + square + root][j] = solution4[i][j];
+            	int[][] solution5 = SudokuSolver.solve(subSudoku(square + root, square + root));
+            	for (int i = 0; i < square; i++)
+            		for (int j = 0; j < square; j++)
+            			grid[i + square + root][j + square + root] = solution5[i][j];
+            	int[][] solution3 = SudokuSolver.solve(subSudoku(square - root, square - root));
+            	for (int i = 0; i < square; i++)
+            		for (int j = 0; j < square; j++)
+            			grid[i + square - root][j + square - root] = solution3[i][j];
+            }
             // Print and save end time
             Date endTime = new Date();
             System.out.println("Ended at " + endTime);
             // Get the time difference (unit: seconds)
             double timeElapsed = (endTime.getTime() - startTime.getTime()) / 1000.0;
-            if (solution[0][0] == 0)// Infeasible sudoku
-                JOptionPane.showMessageDialog(null, "This sudoku is not feasible.\n(Took " + timeElapsed + " seconds.)");
-            else // Feasible sudoku
-                JOptionPane.showMessageDialog(null, "Done! Click OK to see result!\n(Took " + timeElapsed + " seconds.)");
+            boolean valid = true;
+            for (int i = 0; i < grid.length; i++)
+            	for (int j = 0; j < grid.length; j++)
+            		if (grid[i][j] == 0)// Infeasible sudoku
+            			valid = false;
+            if (!valid)
+            	JOptionPane.showMessageDialog(null, "This sudoku is not feasible.\n(Took " + timeElapsed + " seconds.)");
+            else 
+            	JOptionPane.showMessageDialog(null, "Done! Click OK to see result!\n(Took " + timeElapsed + " seconds.)");
             // Display solution
-            grid = solution;
+            /*for (int i = 0; i < grid.length; i++) {
+            	for (int j = 0; j < grid.length; j++)
+            		System.out.print(grid[i][j] + " ");
+            	System.out.println();
+            }*/
             showPuzzle(grid);
         }
     }
