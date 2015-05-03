@@ -43,7 +43,7 @@ public class test {
         print2DArray(matrix);
     }
 
-    public static void print2DArray(int[][] matrix) {
+    private static void print2DArray(int[][] matrix) {
         int length = matrix.length;
         int squareRoot = Math.round((long) Math.sqrt(length));
         for (int i = 0; i < length; i++) {
