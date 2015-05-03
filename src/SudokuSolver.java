@@ -6,10 +6,6 @@ import java.util.Scanner;
 import java.util.Stack;
 
 //TODO: Consider edge cases?
-/*TODO: Minor speedups
-1) Manual copy of array -> System.arraycopy()
-2) Math.sqrt() -> for loop
-*/
 public class SudokuSolver {
     public static int[][] solve(int[][] grid) {
         // Declaration/Initialization of local variables
@@ -17,13 +13,7 @@ public class SudokuSolver {
         index = grid.length; // for debugging purposes
         int length = grid.length;
         squareRoot = Math.round((long) Math.sqrt(length));
-        int[][][] markupGrid = new int[length][length][length];
-
-        // Initialize markupGrid with 1 everywhere
-        for (int i = 0; i < length; ++i)
-            for (int j = 0; j < length; ++j)
-                for (int k = 0; k < length; ++k)
-                    markupGrid[i][j][k] = 1;
+        MarkupGrid markupGrid = new MarkupGrid(length);
 
         // For every entry given, update markups accordingly
         for (int i = 0; i < length; ++i)
@@ -36,28 +26,15 @@ public class SudokuSolver {
                 // Get the corresponding index
                 index = num - 1;
                 // INVALID IF THIS NUMBER IS NOT IN THE MARKUP
-                if (markupGrid[i][j][index] == 0) return new int[length][length];
-                // UPDATE MARKUPS
-                for (int k = 0; k < length; ++k) {
-                    // 1) No other values can go into that cell, so markup for that cell is now an array of zeros
-                    markupGrid[i][j][k] = 0;
-                    // 2) num cannot appear again in the same row
-                    markupGrid[i][k][index] = 0;
-                    // 3) num cannot appear again in the same column
-                    markupGrid[k][j][index] = 0;
-                }
-                // 4) num cannot appear again in the same square
-                for (int m = 0; m < squareRoot; ++m)
-                    for (int n = 0; n < squareRoot; ++n) {
-                        rowSquare = (i / squareRoot) * squareRoot;
-                        colSquare = (j / squareRoot) * squareRoot;
-                        markupGrid[rowSquare + m][colSquare + n][index] = 0;
-                    }
+                if (markupGrid.getMarkupGrid()[i][j][index] == 0)
+                    return new int[length][length];
+                // Otherwise, update markupGrid
+                markupGrid.update(i, j, num);
             }
 
         // Declare and initialize stacks
         Stack<int[][]> possibilities = new Stack<int[][]>();
-        Stack<int[][][]> listOfMarkupGrids = new Stack<int[][][]>();
+        Stack<MarkupGrid> listOfMarkupGrids = new Stack<MarkupGrid>();
         possibilities.push(grid);
         listOfMarkupGrids.push(markupGrid);
 
@@ -81,7 +58,7 @@ public class SudokuSolver {
                         // Count the number of candidates for that cell
                         counter = 0;
                         for (int k = 0; k < length; ++k)
-                            if (markupGrid[i][j][k] == 1) {
+                            if (markupGrid.getMarkupGrid()[i][j][k] == 1) {
                                 counter++;
                                 index = k;
                             }
@@ -94,22 +71,7 @@ public class SudokuSolver {
                             // Put in the only candidate
                             num = index + 1; // because num is the entry
                             grid[i][j] = num;
-                            // UPDATE MARKUPS
-                            // 1) The last 1 in the markup is now 0
-                            markupGrid[i][j][index] = 0;
-                            for (int k = 0; k < length; ++k) {
-                                // 2) The number cannot appear again in the same row
-                                markupGrid[i][k][index] = 0;
-                                // 3) The number cannot appear again in the same column
-                                markupGrid[k][j][index] = 0;
-                            }
-                            // 4) The number cannot appear again in the same square
-                            for (int m = 0; m < squareRoot; ++m)
-                                for (int n = 0; n < squareRoot; ++n) {
-                                    rowSquare = (i / squareRoot) * squareRoot;
-                                    colSquare = (j / squareRoot) * squareRoot;
-                                    markupGrid[rowSquare + m][colSquare + n][index] = 0;
-                                }
+                            markupGrid.update(i, j, num);
                             done = false;
                             break;
                         }
@@ -130,7 +92,7 @@ public class SudokuSolver {
                     // Skip blank cells
                     if (grid[i][j] != 0) continue;
                     for (int k = 0; k < length; ++k)
-                        if (markupGrid[i][j][k] == 1) counter++;
+                        if (markupGrid.getMarkupGrid()[i][j][k] == 1) counter++;
                     if (counter > 0 && counter < min) {
                         min = counter;
                         row = i;
@@ -141,51 +103,22 @@ public class SudokuSolver {
                 }
             }
             // Try all candidates
-            ArrayList<Integer> listOfCandidates = SudokuSolver.markupToArrayList(markupGrid[row][col]);
+            ArrayList<Integer> listOfCandidates = SudokuSolver.markupToArrayList(markupGrid.getMarkupGrid()[row][col]);
             for (int k : listOfCandidates) {
                 // Update grid and push it to the stack
                 int[][] newGrid = new int[length][length];
                 for (int i = 0; i < length; ++i)
-                    for (int j = 0; j < length; ++j)
-                        newGrid[i][j] = grid[i][j];
+                    System.arraycopy(grid[i], 0, newGrid[i], 0, length);
                 newGrid[row][col] = k;
                 possibilities.push(newGrid);
                 // Update markupGrid and push it to the stack
-                int[][][] newMarkupGrid = updateMarkupGrid(markupGrid, row, col, k);
+                MarkupGrid newMarkupGrid = new MarkupGrid(markupGrid);
+                newMarkupGrid.update(row, col, k);
                 listOfMarkupGrids.push(newMarkupGrid);
             }
         }
         // The stack is empty if you get here
         return new int[length][length];
-    }
-
-    public static int[][][] updateMarkupGrid(int[][][] markupGrid, int row, int col, int num) {
-        int length = markupGrid.length;
-        int squareRoot = Math.round((long) Math.sqrt(length));
-        int rowSquare = (row / squareRoot) * squareRoot;
-        int colSquare = (col / squareRoot) * squareRoot;
-        // Get the corresponding index
-        int index = num - 1;
-        // Make a copy
-        int[][][] newMarkupGrid = new int[length][length][length];
-        for (int i = 0; i < length; ++i)
-            for (int j = 0; j < length; ++j)
-                for (int k = 0; k < length; ++k)
-                    newMarkupGrid[i][j][k] = markupGrid[i][j][k];
-        // Start updating
-        for (int k = 0; k < length; ++k) {
-            // 1) No other values can go into that cell, so markup for that cell is now an array of zeros
-            newMarkupGrid[row][col][k] = 0;
-            // 2) num cannot appear again in the same row
-            newMarkupGrid[row][k][index] = 0;
-            // 3) num cannot appear again in the same column
-            newMarkupGrid[k][col][index] = 0;
-        }
-        // 4) num cannot appear again in the same square
-        for (int m = 0; m < squareRoot; ++m)
-            for (int n = 0; n < squareRoot; ++n)
-                newMarkupGrid[rowSquare + m][colSquare + n][index] = 0;
-        return newMarkupGrid;
     }
 
     public static ArrayList<Integer> markupToArrayList(int[] markup) {
@@ -206,7 +139,7 @@ public class SudokuSolver {
             if (square == squareRoot * squareRoot)
                 break;
         } while (true);
-        String fileName = "";
+        String fileName;
         do {
             System.out.print("Enter a file name: ");
             fileName = keyboard.next();
@@ -233,68 +166,8 @@ public class SudokuSolver {
         JFrame frame = new JFrame("Sudoku Solver");
         frame.setSize(500, 500);
         frame.setLocation(200, 100);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setContentPane(new Panel(grid));
         frame.setVisible(true);
     }
 }
-                /* See if there is only one cell whose markup has a particular number
-                row = -1;
-                col = -1;
-                for (num = 1; num <= length; num++) {
-                    index = num - 1;
-                    // Check horizontals
-                    for (int i = 0; i < length; ++i) {
-                        counter = 0;
-                        for (int j = 0; j < length; ++j) {
-                            if (markupGrid[i][j][index] == 1) {
-                                counter++;
-                                row = i;
-                                col = j;
-                            }
-                        }
-                        if (counter == 1) {
-                            grid[row][col] = num;
-                            markupGrid = updateMarkupGrid(markupGrid, row, col, num);
-                        }
-                        row = -1;
-                        col = -1;
-                    }
-                    // Check verticals
-                    for (int j = 0; j < length; ++j) {
-                        counter = 0;
-                        for (int i = 0; i < length; ++i) {
-                            if (markupGrid[i][j][index] == 1) {
-                                counter++;
-                                row = i;
-                                col = j;
-                            }
-                        }
-                        if (counter == 1) {
-                            grid[row][col] = num;
-                            markupGrid = updateMarkupGrid(markupGrid, row, col, num);
-                        }
-                        row = -1;
-                        col = -1;
-                    }
-                    // Check squares
-                    for (int i = 0; i < length; i += squareRoot)
-                        for (int j = 0; j < length; j += squareRoot) {
-                            counter = 0;
-                            for (int m = 0; m < squareRoot; ++m) {
-                                for (int n = 0; n < squareRoot; ++n) {
-                                    if (markupGrid[i][j][index] == 1) {
-                                        counter++;
-                                        row = i;
-                                        col = j;
-                                    }
-                                }
-                            }
-                            if (counter == 1) {
-                                grid[row][col] = num;
-                                markupGrid = updateMarkupGrid(markupGrid, row, col, num);
-                            }
-                            row = -1;
-                            col = -1;
-                        }
-                }*/

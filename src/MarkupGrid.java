@@ -3,7 +3,7 @@ public class MarkupGrid {
 
     // Initializes with 1 everywhere
     public MarkupGrid(int length) {
-        this.markupGrid = new int[9][9][9];
+        this.markupGrid = new int[length][length][length];
         for (int i = 0; i < length; i++)
             for (int j = 0; j < length; j++)
                 for (int k = 0; k < length; k++)
@@ -13,11 +13,10 @@ public class MarkupGrid {
     // Creates a deep copy
     public MarkupGrid(MarkupGrid another){
         int length = another.getMarkupGrid().length;
-        this.markupGrid = new int[9][9][9];
+        this.markupGrid = new int[length][length][length];
         for (int i = 0; i < length; i++)
             for (int j = 0; j < length; j++)
-                for (int k = 0; k < length; k++)
-                    markupGrid[i][j][k] = another.getMarkupGrid()[i][j][k];
+                System.arraycopy(another.getMarkupGrid()[i][j], 0, markupGrid[i][j], 0, length);
     }
 
     // Getter
