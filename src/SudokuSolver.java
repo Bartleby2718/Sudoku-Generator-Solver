@@ -209,7 +209,7 @@ public class SudokuSolver {
             frame = new JFrame("Samurai Sudoku Solver");
         else
             frame = new JFrame("Regular Sudoku Solver");
-        frame.setSize(500, 500);
+        frame.setSize(600, 600);
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setContentPane(new Panel(grid, samurai, square));
