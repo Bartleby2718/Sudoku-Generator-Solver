@@ -1,8 +1,4 @@
-import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Scanner;
 import java.util.Stack;
 
 public class SudokuSolver {
@@ -142,88 +138,5 @@ public class SudokuSolver {
         }
         // The stack is empty if you get here
         return null;
-    }
-
-    public static void main(String[] args) throws IOException {
-        int[][] grid;
-        int choice, length, square, root, type, val;
-        double clueProportion;
-        boolean isSamurai;
-        choice = Utils.answer0or1("Enter 0 if you want to enter the name of input file.\nEnter 1 if you want to generate a random sudoku.");
-        if (choice == 0) { // input file
-            String fileName;
-            do {
-                fileName = JOptionPane.showInputDialog(null, "Enter the name of the input file.");
-            } while (!new File(fileName).exists());
-            length = 0;
-            // First run: get length
-            Scanner fileScanner = new Scanner(new File(fileName));
-            while (fileScanner.hasNextLine())
-                if (fileScanner.nextLine().trim().length() != 0)
-                    length++;
-            fileScanner.close();
-            // Second run: get square and isSamurai
-            isSamurai = false;
-            square = length;
-            fileScanner = new Scanner(new File(fileName));
-            grid = new int[length][length];
-            int i = 0;
-            while (fileScanner.hasNextLine()) {
-                // Trim leading/trailing whitespace
-                String line = fileScanner.nextLine().trim();
-                // Skip blank lines
-                if (line.length() == 0) continue;
-                // Each square is delimited by three spaces
-                String[] data = line.split("   ");
-                for (int j = 0; j < data.length; j++) {
-                    // Each entry in a square is delimited by a single space
-                    String[] data2 = data[j].split(" ");
-                    // This is the square root of the number of cells in a square
-                    root = data2.length;
-                    for (int k = 0; k < root; k++) {
-                        // "b" indicates a black cell
-                        if (data2[k].equals("-1")) {
-                            // It must be a Samurai Sudoku
-                            isSamurai = true;
-                            // Fill in -1 if black
-                            grid[i][root * j + k] = -1;
-                        } else {
-                            val = Integer.parseInt(data2[k]);
-                            square = root * root;
-                            // Guarantees that all numbers in the input file are between 1 and square inclusive (except for "-1")
-                            if (val >= 0 && val <= square)
-                                grid[i][root * j + k] = val;
-                            else
-                                throw new IllegalArgumentException("Some entry is invalid in the input file.");
-                        }
-                    }
-                }
-                i++;
-            }
-            fileScanner.close();
-        } else { // generate a sudoku
-            type = Utils.answer0or1("Enter 0 if you want a regular sudoku.\nEnter 1 if you want a samurai sudoku.");
-            clueProportion = Utils.answerWithDouble("What proportion of clues do you want revealed?");
-            if (type == 0) { // regular sudoku
-                isSamurai = false;
-                square = Utils.getSquare("What is the length of the regular sudoku?\n(It must be a perfect square.)");
-                root = Math.round((long) Math.sqrt(square));
-                grid = SudokuGenerator.generateSudoku(square, clueProportion);
-            } else {// Samurai Sudoku
-                isSamurai = true;
-                square = Utils.getSquare("A samurai sudoku is composed of several squares.\nHow many cells are there in each square?");
-                length = Utils.getLength("What is the length of this samurai sudoku?", square);
-                grid = SudokuGenerator.samuraiSudokuGenerator(square, length, clueProportion);
-            }
-        }
-        JFrame frame;
-        if (isSamurai) frame = new JFrame("Samurai Sudoku Solver");
-        else frame = new JFrame("Regular Sudoku Solver");
-        frame.setSize(650, 650);
-        frame.setLocationRelativeTo(null);
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setContentPane(new Panel(grid, isSamurai, square));
-        frame.setVisible(true);
-        System.out.println("Look at the pop-up!");
     }
 }

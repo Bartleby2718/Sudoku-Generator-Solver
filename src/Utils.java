@@ -64,7 +64,8 @@ public class Utils {
         return copy;
     }
 
-    public static int getLength(String message, int square) {
+    public static int askDimSamurai(int square) {
+        String message = "What is the dimension of this samurai sudoku?";
         int length, root;
         root = Math.round((long) Math.sqrt(square));
         do {
@@ -73,7 +74,7 @@ public class Utils {
         return length;
     }
 
-    public static int getSquare(String message) {
+    public static int askSquare(String message) {
         int square, root;
         do {
             square = Integer.parseInt(JOptionPane.showInputDialog(null, message));
@@ -81,7 +82,6 @@ public class Utils {
         } while (square != root * root);
         return square;
     }
-
 
     public static int answer0or1(String message) {
         int a;
@@ -91,11 +91,18 @@ public class Utils {
         return a;
     }
 
-    public static double answerWithDouble(String message) {
+    public static double askProportion() {
         double a;
+        String message = "What proportion of clues do you want revealed?";
+        message += "\n(Enter a value between 0 and 1.)";
         do {
             a = Double.parseDouble(JOptionPane.showInputDialog(null, message));
         } while (a < 0 || a > 1);
         return a;
+    }
+
+    public static String determineType(boolean isSamurai) {
+        if (isSamurai) return "Samurai Sudoku";
+        else return "Regular Sudoku";
     }
 }
