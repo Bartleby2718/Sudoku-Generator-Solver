@@ -42,8 +42,8 @@ public class SudokuGenerator {
             }
         }
         int percentage = (int) (clueProportion * 100);
-        writeToTextFile(matrix, square, percentage);
-        System.out.println("Check out \"" + square + "X" + square + "_Samurai_" + percentage + "%.txt\"!");
+        writeToTextFile(matrix, square, percentage, false);
+        System.out.println("Check out \"" + square + "X" + square + "Regular" + percentage + "%.txt\"!");
         return matrix;
     }
 
@@ -107,8 +107,8 @@ public class SudokuGenerator {
             }
         }
         int percentage = (int) (100 * clueProportion);
-        writeToTextFile(matrix, square, percentage);
-        System.out.println("Check out \"" + length + "X" + length + "_Samurai_" + percentage + "%.txt\"!");
+        writeToTextFile(matrix, square, percentage, true);
+        System.out.println("Check out \"" + length + "X" + length + "Samurai" + percentage + "%.txt\"!");
         return matrix;
     }
 
@@ -127,10 +127,10 @@ public class SudokuGenerator {
         }
     }
 
-    private static void writeToTextFile(int[][] matrix, int square, int clueProportion) throws IOException {
+    private static void writeToTextFile(int[][] matrix, int square, int clueProportion, boolean isSamurai) throws IOException {
         int length = matrix.length;
         int root = Math.round((long) Math.sqrt(square));
-        File file = new File(length + "X" + length + "_Samurai_" + clueProportion + "%.txt");
+        File file = new File(length + "X" + length + Utils.determineType(isSamurai) + clueProportion + "%.txt");
         FileWriter fw = new FileWriter(file.getAbsoluteFile());
         BufferedWriter bw = new BufferedWriter(fw);
         for (int i = 0; i < length; i++) {

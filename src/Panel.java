@@ -12,7 +12,6 @@ public class Panel extends JPanel {
     private int[][] grid;
     private final boolean isSamurai;
     private final int square; // Number of cells in each square
-    private final int root;
     private final int length; // Total length of grid
     private ArrayList<JTextField> textBoxes;
     private JPanel gridSpace;
@@ -22,7 +21,6 @@ public class Panel extends JPanel {
         this.grid = grid;
         this.isSamurai = isSamurai;
         this.square = square;
-        this.root = Math.round((long) Math.sqrt(square));
         this.length = grid.length;
 
         textBoxes = new ArrayList<JTextField>();
@@ -43,6 +41,7 @@ public class Panel extends JPanel {
     }
 
     private void showPuzzle() {
+        int root = Math.round((long) Math.sqrt(square));
         gridSpace.removeAll();
         for (int i = 0; i < length; i++)
             for (int j = 0; j < length; j++) {

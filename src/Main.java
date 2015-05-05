@@ -94,7 +94,7 @@ public class Main {
             length = Utils.askDimSamurai(square);
             grid = SudokuGenerator.generateSamurai(square, length, clueProportion);
         }
-        JFrame frame = new JFrame(Utils.determineType(isSamurai) + " Solver");
+        JFrame frame = new JFrame(Utils.determineType(isSamurai) + " Sudoku Solver");
         frame.setSize(650, 650);
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);

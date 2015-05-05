@@ -102,7 +102,7 @@ public class Utils {
     }
 
     public static String determineType(boolean isSamurai) {
-        if (isSamurai) return "Samurai Sudoku";
-        else return "Regular Sudoku";
+        if (isSamurai) return "Samurai";
+        else return "Regular";
     }
 }
