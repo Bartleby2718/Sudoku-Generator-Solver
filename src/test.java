@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Scanner;
 
-public class test {
+public class Test {
     public static void main(String[] args) {
         Scanner keyboard = new Scanner(System.in);
         int square, squareRoot, numClues;

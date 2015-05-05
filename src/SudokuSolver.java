@@ -5,33 +5,45 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Stack;
 
-//TODO: Consider edge cases?
 public class SudokuSolver {
-    public static int[][] solve(int[][] grid) {
+    public static int[][] solve(int[][] grid, boolean isSamurai, int square) {
         // Declaration/Initialization of local variables
-        int num, index, squareRoot, row, col, counter, min, rowSquare, colSquare;
-        index = grid.length; // for debugging purposes
+        int num, row, col, counter, min, rowSquare, colSquare;
+        int index = grid.length; // for debugging purposes
         int length = grid.length;
-        squareRoot = Math.round((long) Math.sqrt(length));
-        MarkupGrid markupGrid = new MarkupGrid(length);
+        int root = Math.round((long) Math.sqrt(square));
+        MarkupGrid markupGrid = new MarkupGrid(length, square);
 
-        // For every entry given, update markups accordingly
-        for (int i = 0; i < length; ++i)
-            for (int j = 0; j < length; ++j) {
-                // Skip if the entry is not known
-                if (grid[i][j] == 0) continue;
-                // Now that the entry is known(nonzero)...
-                // Get the number
-                num = grid[i][j];
-                // Get the corresponding index
-                index = num - 1;
-                // INVALID IF THIS NUMBER IS NOT IN THE MARKUP
-                if (markupGrid.getMarkupGrid()[i][j][index] == 0)
-                    return new int[length][length];
-                // Otherwise, update markupGrid
-                markupGrid.update(i, j, num);
+        // Identify the number of squares
+        // length = square * n - root * (n-1) = (square - root) * n + root
+        int b = square - root;
+
+        // Identify the top left positions
+        for (int i = 0; i < length - root; i += b) {
+            for (int j = 0; j < length - root; j += b) {
+                if ((i / b + j / b) % 2 == 0) {
+                    // For each subsudoku
+                    for (int m = 0; m < square; m++) {
+                        for (int n = 0; n < square; n++) {
+                            row = i + m;
+                            col = j + n;
+                            // Update markups if an entry is given
+                            // Skip if the cell is black or not blank
+                            if (grid[row][col] <= 0)
+                                continue;
+                            // Now that the entry is known(nonzero)...
+                            // Get the number
+                            num = grid[row][col];
+                            // Get the corresponding index
+                            index = num - 1;
+                            // Update markupGrid
+                            if (isSamurai) markupGrid.updateSamurai(row, col, num);
+                            else markupGrid.updateSubsudoku(0, 0, row, col, num);
+                        }
+                    }
+                }
             }
-
+        }
         // Declare and initialize stacks
         Stack<int[][]> possibilities = new Stack<int[][]>();
         Stack<MarkupGrid> listOfMarkupGrids = new Stack<MarkupGrid>();
@@ -50,14 +62,15 @@ public class SudokuSolver {
                 valid = true; // Valid unless we find a blank cell with 0 candidate
                 done = true; // Done unless we find a blank cell with 1 candidate
                 // Iterate over all cells
-                for (int i = 0; i < length; ++i) {
-                    for (int j = 0; j < length; ++j) {
-                        // Pass if the entry is known
+                // TODO If Samurai, Iterate over only non-black cells?
+                for (int i = 0; i < length; i++) {
+                    for (int j = 0; j < length; j++) {
+                        // Pass if the entry is known or the entry is black
                         if (grid[i][j] != 0) continue;
                         full = false; // Some entry is not known yet!
                         // Count the number of candidates for that cell
                         counter = 0;
-                        for (int k = 0; k < length; ++k)
+                        for (int k = 0; k < square; k++)
                             if (markupGrid.getMarkupGrid()[i][j][k] == 1) {
                                 counter++;
                                 index = k;
@@ -71,104 +84,114 @@ public class SudokuSolver {
                             // Put in the only candidate
                             num = index + 1; // because num is the entry
                             grid[i][j] = num;
-                            markupGrid.update(i, j, num);
+                            if (isSamurai) markupGrid.updateSamurai(i, j, num);
+                            else markupGrid.updateSubsudoku(0, 0, i, j, num);
                             done = false;
                             break;
                         }
                     }
                 }
             }
-            if (full) return grid; // Done if full // TODO MAY NEED TO CHECK VALIDITY
-            if (!valid) continue; // Move on to the next one if invalid
+            // Move on to the next one if invalid
+            if (!valid)
+                continue;
+            // Check validity if valid (Note: The line above guarantees that valid=true right now)
+            if (full) {
+                if (isSamurai) {
+                    for (int i = 0; i < length - root; i += b)
+                        for (int j = 0; j < length - root; j += b)
+                            if ((i / b + j / b) % 2 == 0)
+                                if (!Utils.isValid(Utils.copyGrid(grid, i, j, square)))
+                                    return null;
+                } else
+                    valid = Utils.isValid(grid);
+                if (valid)
+                    return grid;
+                else
+                    return null;
+            }
             // Done filling out trivial cells and valid so far!
             // Find the cell with the fewest candidates (linear search)
             min = length;
             row = -1; // for debugging purposes
             col = -1; // for debugging purposes
             outerLoop:
-            for (int i = 0; i < length; ++i) {
-                for (int j = 0; j < length; ++j) {
+            for (int i = 0; i < length; i++) {
+                for (int j = 0; j < length; j++) {
                     counter = 0;
-                    // Skip blank cells
-                    if (grid[i][j] != 0) continue;
-                    for (int k = 0; k < length; ++k)
-                        if (markupGrid.getMarkupGrid()[i][j][k] == 1) counter++;
-                    if (counter > 0 && counter < min) {
-                        min = counter;
+                    // Skip blank cells and black cells
+                    if (grid[i][j] != 0)
+                        continue;
+                    counter = Utils.countOnes(markupGrid.getMarkupGrid()[i][j]);
+                    if (counter < 2)
+                        System.out.println("Invalid at " + i + ", " + j);
+                    else if (counter < min) {
                         row = i;
                         col = j;
                         // Exit when a cell with two candidates is found
-                        if (counter == 2) break outerLoop;
+                        if (counter == 2)
+                            break outerLoop;
+                        min = counter;
                     }
                 }
             }
             // Try all candidates
-            ArrayList<Integer> listOfCandidates = SudokuSolver.markupToArrayList(markupGrid.getMarkupGrid()[row][col]);
+            ArrayList<Integer> listOfCandidates = Utils.markupToArrayList(markupGrid.getMarkupGrid()[row][col]);
             for (int k : listOfCandidates) {
                 // Update grid and push it to the stack
                 int[][] newGrid = new int[length][length];
-                for (int i = 0; i < length; ++i)
+                for (int i = 0; i < length; i++)
                     System.arraycopy(grid[i], 0, newGrid[i], 0, length);
                 newGrid[row][col] = k;
                 possibilities.push(newGrid);
                 // Update markupGrid and push it to the stack
-                MarkupGrid newMarkupGrid = new MarkupGrid(markupGrid);
-                newMarkupGrid.update(row, col, k);
+                MarkupGrid newMarkupGrid = new MarkupGrid(markupGrid, square);
+                if (isSamurai)
+                    newMarkupGrid.updateSamurai(row, col, k);
+                else
+                    newMarkupGrid.updateSubsudoku(0, 0, row, col, k);
                 listOfMarkupGrids.push(newMarkupGrid);
             }
         }
         // The stack is empty if you get here
-        return new int[length][length];
+        return null;
     }
 
-    public static ArrayList<Integer> markupToArrayList(int[] markup) {
-        ArrayList<Integer> list = new ArrayList<Integer>();
-        for (int i = 0; i < markup.length; i++)
-            if (markup[i] == 1)
-                list.add(i + 1); // i is an index; we want the entries
-        return list;
-    }
-
-    public static int[][] processInput(String fileName, int square, boolean samurai) throws FileNotFoundException {
-        int squareRoot = Math.round((long) Math.sqrt(square));
+    public static int[][] processInput(String fileName) throws FileNotFoundException {
+        int length = 0;
         Scanner fileScanner = new Scanner(new File(fileName));
+        while (fileScanner.hasNextLine())
+            if (fileScanner.nextLine().trim().length() != 0)
+                length++;
+        fileScanner.close();
+        fileScanner = new Scanner(new File(fileName));
         int[][] grid;
-        if (!samurai) {
-            grid = new int[square][square];
-            int i = 0;
-            while (fileScanner.hasNextLine()) {
-                // Trim leading/trailing whitespace
-                String line = fileScanner.nextLine().trim();
-                if (line.length() == 0)
-                    continue;
-                String[] data = line.split("   ");
-                for (int j = 0; j < squareRoot; j++) {
-                    String[] data2 = data[j].split(" ");
-                    for (int k = 0; k < squareRoot; k++)
-                        grid[i][squareRoot * j + k] = Integer.parseInt(data2[k]);
-                }
-                i++;
-            }
-        } else {
-            grid = new int[2 * square + squareRoot][2 * square + squareRoot];
-            int i = 0;
-            while (fileScanner.hasNextLine()) {
-                // Trim leading/trailing whitespace
-                String line = fileScanner.nextLine().trim();
-                if (line.length() == 0)
-                    continue;
-                String[] data = line.split("   ");
-                for (int j = 0; j < data.length; j++) {
-                    String[] data2 = data[j].split(" ");
-                    for (int k = 0; k < squareRoot; k++) {
-                        if (data2[k].equals("b")) // Blank indicator
-                            grid[i][squareRoot * j + k] = -1;
+        grid = new int[length][length];
+        int i = 0;
+        int square, val;
+        while (fileScanner.hasNextLine()) {
+            // Trim leading/trailing whitespace
+            String line = fileScanner.nextLine().trim();
+            if (line.length() == 0)
+                continue;
+            String[] data = line.split("   ");
+            for (int j = 0; j < data.length; j++) {
+                String[] data2 = data[j].split(" ");
+                for (int k = 0; k < data2.length; k++) {
+                    // "b" indicates a black cell
+                    if (data2[k].equals("b"))
+                        grid[i][data2.length * j + k] = -1;
+                    else {
+                        val = Integer.parseInt(data2[k]);
+                        if (val >= 0 && val <= data2.length * data2.length)
+                            grid[i][data2.length * j + k] = val;
                         else
-                            grid[i][squareRoot * j + k] = Integer.parseInt(data2[k]);
+                            // Guarantees that all numbers in the input file are between 1 and square inclusive (except for "b")
+                            throw new IllegalArgumentException("Some entry is invalid in the input file.");
                     }
                 }
-                i++;
             }
+            i++;
         }
         fileScanner.close();
         return grid;
@@ -176,43 +199,73 @@ public class SudokuSolver {
 
     public static void main(String[] args) throws FileNotFoundException {
         Scanner keyboard = new Scanner(System.in);
-        int square, squareRoot;
-        do {
-            System.out.print("Enter a perfect square: ");
-            square = keyboard.nextInt();
-            squareRoot = Math.round((long) Math.sqrt(square));
-            if (square == squareRoot * squareRoot)
-                break;
-        } while (true);
-        boolean samurai;
+        // Is it a samurai sudoku?
+        boolean isSamurai;
         do {
             System.out.print("Is this Samurai Sudoku? (y/n): ");
             String answer = keyboard.next();
             if (answer.equalsIgnoreCase("y")) {
-                samurai = true;
+                isSamurai = true;
                 break;
             } else if (answer.equalsIgnoreCase("n")) {
-                samurai = false;
+                isSamurai = false;
                 break;
             }
         } while (true);
+        // What are its dimensions?
+        int square, root, length;
+        if (isSamurai) {
+            do {
+                do {
+                    length = 0;
+                    System.out.print("Enter the length of the entire grid: ");
+                    length = keyboard.nextInt();
+                } while (length <= 0);
+                do {
+                    System.out.print("Enter the number of cells in each sub-sudoku: ");
+                    square = keyboard.nextInt();
+                    root = Math.round((long) Math.sqrt(square));
+                    if (square != root * root)
+                        System.out.println("It has to be a perfect square!");
+                    else
+                        break;
+                } while (true);
+                if ((length - root) % (square - root) != 0)
+                    System.out.println("Unable to make a samurai sudoku with the given dimensions.");
+                else
+                    break;
+            } while (true);
+        } else
+            do {
+                System.out.print("Enter the length of the entire grid: ");
+                square = keyboard.nextInt();
+                root = Math.round((long) Math.sqrt(square));
+                if (square != root * root)
+                    System.out.println("It has to be a perfect square!");
+                else
+                    break;
+            } while (true);
+
         String fileName;
         do {
             System.out.print("Enter a file name: ");
             fileName = keyboard.next();
-        } while (!new File(fileName).exists());
-        System.out.println("Now look at the pop-up!");
+            if (!new File(fileName).exists())
+                System.out.println("There is no such file in the directory.");
+            else
+                break;
+        } while (true);
         keyboard.close();
-        int[][] grid = processInput(fileName, square, samurai);
+        System.out.println("Processing the input file...");
+        int[][] grid = processInput(fileName);
         JFrame frame;
-        if (samurai)
-            frame = new JFrame("Samurai Sudoku Solver");
-        else
-            frame = new JFrame("Regular Sudoku Solver");
+        if (isSamurai) frame = new JFrame("Samurai Sudoku Solver");
+        else frame = new JFrame("Regular Sudoku Solver");
         frame.setSize(600, 600);
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setContentPane(new Panel(grid, samurai, square));
+        frame.setContentPane(new Panel(grid, isSamurai, square));
         frame.setVisible(true);
+        System.out.println("Look at the pop-up!");
     }
 }
