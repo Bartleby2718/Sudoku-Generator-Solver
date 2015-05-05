@@ -14,7 +14,8 @@ public class Panel extends JPanel {
     private final int root;
     private final int length; // Total length of grid
     private ArrayList<JTextField> textBoxes;
-    private JPanel gridSpace;
+    private JPanel gridSpace, buttonSpace;
+    private JButton solveButton, generateButton;
 
     public Panel(int[][] grid, boolean isSamurai, int square) {
         setLayout(new BorderLayout());
@@ -25,33 +26,30 @@ public class Panel extends JPanel {
         this.length = grid.length;
 
         textBoxes = new ArrayList<JTextField>();
-        JButton solveButton = new JButton("Solve Puzzle");
+        solveButton = new JButton("Solve Puzzle");
         solveButton.addActionListener(new solveListener());
-
-        /*
-        generateRegular = new JButton("Generate Sudoku Puzzle");
-        generateRegular.addActionListener(new generateRegularListener());
-        generateSamurai = new JButton("Generate Samurai Sudoku Puzzle");
-        generateSamurai.addActionListener(new generateSamuraiListener());
-        */
-
+        generateButton = new JButton("Generate Sudoku");
+        generateButton.addActionListener(new GenerateListener());
+        
         gridSpace = new JPanel();
         gridSpace.setLayout(new GridLayout(length, length));
-        JPanel buttonSpace = new JPanel();
-        buttonSpace.setLayout(new GridLayout(1, 1));
+        buttonSpace = new JPanel();
+        buttonSpace.setLayout(new GridLayout(1, 2));
         buttonSpace.add(solveButton);
+        buttonSpace.add(generateButton);
         showPuzzle();
         add(gridSpace);
         add(buttonSpace, BorderLayout.SOUTH);
-        //add(generateRegular, BorderLayout.SOUTH);
-        //add(generateSamurai, BorderLayout.SOUTH);
     }
 
     private void showPuzzle() {
-        gridSpace.removeAll();
+    	gridSpace.removeAll();
+        /*gridSpace = new JPanel();
+        gridSpace.setLayout(new GridLayout(length, length));*/
         for (int i = 0; i < length; i++)
             for (int j = 0; j < length; j++) {
                 JTextField tf = new JTextField();
+                tf.setEditable(false);
                 String text = "";
                 if (grid[i][j] == -1)
                     tf.setBackground(Color.BLACK);
@@ -70,7 +68,7 @@ public class Panel extends JPanel {
         repaint();
     }
 
-    private int getValueAt(int i, int j) {
+    /*private int getValueAt(int i, int j) {
         if (i * length + j >= textBoxes.size())
             return 0;
         if (grid[i][j] == -1)
@@ -79,17 +77,19 @@ public class Panel extends JPanel {
         if (str.equals(""))
             return 0;
         return Integer.parseInt(str);
-    }
+    }*/
 
-    private void updateGrid() {
+    /*private void updateGrid() {
         for (int i = 0; i < length; i++)
             for (int j = 0; j < length; j++)
                 grid[i][j] = getValueAt(i, j);
-    }
+    }*/
+    
+    //private void update
 
     private class solveListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            updateGrid();
+            //updateGrid();
             // Print and save the start time
             Date startTime = new Date();
             System.out.println("Started at " + startTime);
@@ -118,5 +118,23 @@ public class Panel extends JPanel {
             JOptionPane.showMessageDialog(null, message);
             System.out.println("Took " + timeElapsed + " seconds.");
         }
+    }
+    
+    private class GenerateListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			// TODO Auto-generated method stub
+			double clueProportion;
+			do {
+			clueProportion = Double.parseDouble(JOptionPane.showInputDialog(null, "What proportion of clues do you want revealed?"));
+			} while (clueProportion < 0 || clueProportion > 1);
+			if (!isSamurai)
+				grid = SudokuGenerator.generateSudoku(length, clueProportion);
+			else
+				grid = SudokuGenerator.generateSamurai(square, clueProportion);
+			showPuzzle();
+		}
+    	
     }
 }
