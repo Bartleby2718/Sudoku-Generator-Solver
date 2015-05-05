@@ -11,8 +11,8 @@ public class Utils {
 
     public static int countOnes(int[] array) {
         int counter = 0;
-        for (int i = 0; i < array.length; i++)
-            if (array[i] == 1)
+        for (int i : array)
+            if (i == 1)
                 counter++;
         return counter;
     }
@@ -23,21 +23,21 @@ public class Utils {
         ArrayList<Integer> list;
         int length = grid.length;
         // Check rows
-        for (int i = 0; i < length; i++) {
+        for (int[] i : grid) {
             list = new ArrayList<Integer>();
             for (int j = 0; j < length; j++) {
-                if (list.contains(grid[i][j]))
+                if (list.contains(i[j]))
                     return false;
-                list.add(grid[i][j]);
+                list.add(i[j]);
             }
         }
         // Check columns
         for (int j = 0; j < length; j++) {
             list = new ArrayList<Integer>();
-            for (int i = 0; i < length; i++) {
-                if (list.contains(grid[i][j]))
+            for (int[] aGrid : grid) {
+                if (list.contains(aGrid[j]))
                     return false;
-                list.add(grid[i][j]);
+                list.add(aGrid[j]);
             }
         }
         // Check squares

@@ -9,10 +9,10 @@ import java.util.Date;
 @SuppressWarnings("serial")
 public class Panel extends JPanel {
     private int[][] grid;
-    private boolean isSamurai;
-    private int square; // Number of cells in each square
-    private int root;
-    private int length; // Total length of grid
+    private final boolean isSamurai;
+    private final int square; // Number of cells in each square
+    private final int root;
+    private final int length; // Total length of grid
     private ArrayList<JTextField> textBoxes;
     private JPanel gridSpace;
 
@@ -47,7 +47,7 @@ public class Panel extends JPanel {
         //add(generateSamurai, BorderLayout.SOUTH);
     }
 
-    public void showPuzzle() {
+    private void showPuzzle() {
         gridSpace.removeAll();
         for (int i = 0; i < length; i++)
             for (int j = 0; j < length; j++) {
@@ -70,7 +70,7 @@ public class Panel extends JPanel {
         repaint();
     }
 
-    public int getValueAt(int i, int j) {
+    private int getValueAt(int i, int j) {
         if (i * length + j >= textBoxes.size())
             return 0;
         if (grid[i][j] == -1)
@@ -81,7 +81,7 @@ public class Panel extends JPanel {
         return Integer.parseInt(str);
     }
 
-    public void updateGrid() {
+    private void updateGrid() {
         for (int i = 0; i < length; i++)
             for (int j = 0; j < length; j++)
                 grid[i][j] = getValueAt(i, j);
@@ -90,20 +90,16 @@ public class Panel extends JPanel {
     private class solveListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             updateGrid();
-
             // Print and save the start time
             Date startTime = new Date();
             System.out.println("Started at " + startTime);
-
             // Run SudokuSolver
             grid = SudokuSolver.solve(grid, isSamurai, square);
-
             // Print and save end time
             Date endTime = new Date();
             System.out.println("Ended at " + endTime);
             // Get the time difference (unit: seconds)
             double timeElapsed = (endTime.getTime() - startTime.getTime()) / 1000.0;
-
             // Check validity
             boolean valid = true;
             if (grid == null)
@@ -123,8 +119,4 @@ public class Panel extends JPanel {
             System.out.println("Took " + timeElapsed + " seconds.");
         }
     }
-    /*private class generateSamuraiListener implements ActionListener {
-        public void actionPerformed(ActionEvent e) {
-        }
-    }*/
 }

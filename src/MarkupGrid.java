@@ -1,22 +1,30 @@
 public class MarkupGrid {
     private int[][][] markupGrid;
+    private final int length;
+    private final int square;
+    private final int root;
 
     // Initializes with 1 everywhere
-    public MarkupGrid(int length) {
-        this.markupGrid = new int[length][length][length];
+    public MarkupGrid(int length, int square) {
+        markupGrid = new int[length][length][square];
         for (int i = 0; i < length; i++)
             for (int j = 0; j < length; j++)
-                for (int k = 0; k < length; k++)
+                for (int k = 0; k < square; k++)
                     markupGrid[i][j][k] = 1;
+        this.length = length;
+        this.square = square;
+        root = Math.round((long) Math.sqrt(square));
     }
 
     // Creates a deep copy
-    public MarkupGrid(MarkupGrid another){
-        int length = another.getMarkupGrid().length;
-        this.markupGrid = new int[length][length][length];
+    public MarkupGrid(MarkupGrid another) {
+        length = another.getMarkupGrid().length;
+        square = another.getSquare();
+        markupGrid = new int[length][length][square];
         for (int i = 0; i < length; i++)
             for (int j = 0; j < length; j++)
-                System.arraycopy(another.getMarkupGrid()[i][j], 0, markupGrid[i][j], 0, length);
+                System.arraycopy(another.getMarkupGrid()[i][j], 0, markupGrid[i][j], 0, square);
+        root = Math.round((long) Math.sqrt(square));
     }
 
     // Getter
@@ -24,40 +32,36 @@ public class MarkupGrid {
         return markupGrid;
     }
 
-    // Setter (You would clone one if you have to copy the entire markupGrid)
-    public void modifyMarkupGrid(int row, int col, int index, int val) {
-        markupGrid[row][col][index] = val;
+    private int getSquare() {
+        return square;
+    }
+
+    public void updateSamurai(int row, int col, int num) {
+        int b = square - root;
+        // TODO Identify i and j instead of iterating over all cells
+        for (int i = 0; i < length - root; i += square - root)
+            for (int j = 0; j < length - root; j += square - root)
+                if ((i / b + j / b) % 2 == 0 && row >= i && row < i + square && col >= j && col < j + square)
+                    updateSubsudoku(i, j, row - i, col - j, num);
     }
 
     // Update the markupGrid because a new entry("num" at position (row, col)) is now known
-    public void update(int row, int col, int num){
-        int length = markupGrid.length;
-        int squareRoot = Math.round((long) Math.sqrt(length));
-        int rowSquare = (row / squareRoot) * squareRoot;
-        int colSquare = (col / squareRoot) * squareRoot;
+    public void updateSubsudoku(int rowStart, int colStart, int subRow, int subCol, int num) {
         int index = num - 1;
 
-        for (int k = 0; k < length; k++) {
+        for (int k = 0; k < square; k++) {
             // 1) No other values can go into that cell, so markup for that cell is now an array of zeros
-            markupGrid[row][col][k] = 0;
+            markupGrid[rowStart + subRow][colStart + subCol][k] = 0;
             // 2) num cannot appear again in the same row
-            markupGrid[row][k][index] = 0;
+            markupGrid[rowStart + subRow][colStart + k][index] = 0;
             // 3) num cannot appear again in the same column
-            markupGrid[k][col][index] = 0;
+            markupGrid[rowStart + k][colStart + subCol][index] = 0;
         }
         // 4) num cannot appear again in the same square
-        for (int m = 0; m < squareRoot; ++m)
-            for (int n = 0; n < squareRoot; ++n)
-                markupGrid[rowSquare + m][colSquare + n][index] = 0;
-    }
-
-    public static void main(String[] args) {
-        MarkupGrid thing = new MarkupGrid(9);
-        thing.modifyMarkupGrid(0, 0, 0, 1);
-        MarkupGrid another = new MarkupGrid(thing);
-        System.out.println(another.getMarkupGrid()[0][0][0]);
-        another.modifyMarkupGrid(0, 0, 0, 0);
-        System.out.println(thing.getMarkupGrid()[0][0][0]);
-        System.out.println(another.getMarkupGrid()[0][0][0]);
+        int rowSquare = (subRow / root) * root;
+        int colSquare = (subCol / root) * root;
+        for (int m = 0; m < root; m++)
+            for (int n = 0; n < root; n++)
+                markupGrid[rowStart + rowSquare + m][colStart + colSquare + n][index] = 0;
     }
 }
