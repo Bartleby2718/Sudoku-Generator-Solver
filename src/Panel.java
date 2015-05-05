@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -30,7 +31,7 @@ public class Panel extends JPanel {
         solveButton.addActionListener(new solveListener());
         generateButton = new JButton("Generate Sudoku");
         generateButton.addActionListener(new GenerateListener());
-        
+
         gridSpace = new JPanel();
         gridSpace.setLayout(new GridLayout(length, length));
         buttonSpace = new JPanel();
@@ -43,7 +44,7 @@ public class Panel extends JPanel {
     }
 
     private void showPuzzle() {
-    	gridSpace.removeAll();
+        gridSpace.removeAll();
         /*gridSpace = new JPanel();
         gridSpace.setLayout(new GridLayout(length, length));*/
         for (int i = 0; i < length; i++)
@@ -84,7 +85,7 @@ public class Panel extends JPanel {
             for (int j = 0; j < length; j++)
                 grid[i][j] = getValueAt(i, j);
     }*/
-    
+
     //private void update
 
     private class solveListener implements ActionListener {
@@ -119,22 +120,39 @@ public class Panel extends JPanel {
             System.out.println("Took " + timeElapsed + " seconds.");
         }
     }
-    
-    private class GenerateListener implements ActionListener {
 
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			// TODO Auto-generated method stub
-			double clueProportion;
-			do {
-			clueProportion = Double.parseDouble(JOptionPane.showInputDialog(null, "What proportion of clues do you want revealed?"));
-			} while (clueProportion < 0 || clueProportion > 1);
-			if (!isSamurai)
-				grid = SudokuGenerator.generateSudoku(length, clueProportion);
-			else
-				grid = SudokuGenerator.generateSamurai(square, clueProportion);
-			showPuzzle();
-		}
-    	
+    private class GenerateListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int square;
+            int type = Utils.answer0or1("Enter 0 if you want a regular sudoku.\nEnter 1 if you want a samurai sudoku.");
+            double clueProportion = Utils.answerWithDouble("What proportion of clues do you want revealed?");
+            if (type == 0) { //regular sudoku
+                square = Utils.getSquare("What is the length of the regular sudoku?\n(It must be a perfect square.)");
+                try {
+                    grid = SudokuGenerator.generateSudoku(square, clueProportion);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            } else {//type==1, samurai sudoku
+                square = Utils.getSquare("A samurai sudoku is composed of several squares.\nHow many cells are there in each square?");
+                int length = Utils.getLength("What is the length of this samurai sudoku?", square);
+                //grid = SudokuGenerator.generateSamurai(square, clueProportion);
+                try {
+                    grid = SudokuGenerator.samuraiSudokuGenerator(square, length, clueProportion);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+
+            JFrame frame;
+            if (type == 0) frame = new JFrame("Regular Sudoku Solver");
+            else frame = new JFrame("Samurai Sudoku Solver");
+            frame.setSize(600, 600);
+            frame.setLocationRelativeTo(null);
+            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+            frame.setContentPane(new Panel(grid, type == 0, square));
+            frame.setVisible(true);
+        }
     }
 }

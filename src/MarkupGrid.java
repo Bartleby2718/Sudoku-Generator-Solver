@@ -48,7 +48,6 @@ public class MarkupGrid {
     // Update the markupGrid because a new entry("num" at position (row, col)) is now known
     public void updateSubsudoku(int rowStart, int colStart, int subRow, int subCol, int num) {
         int index = num - 1;
-
         for (int k = 0; k < square; k++) {
             // 1) No other values can go into that cell, so markup for that cell is now an array of zeros
             markupGrid[rowStart + subRow][colStart + subCol][k] = 0;

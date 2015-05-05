@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.util.ArrayList;
 
 public class Utils {
@@ -61,5 +62,40 @@ public class Utils {
         for (int i = 0; i < square; i++)
             System.arraycopy(grid[row + i], col, copy[i], 0, square);
         return copy;
+    }
+
+    public static int getLength(String message, int square) {
+        int length, root;
+        root = Math.round((long) Math.sqrt(square));
+        do {
+            length = Integer.parseInt(JOptionPane.showInputDialog(null, message));
+        } while (((length - root) / (square - root)) % 2 != 1);
+        return length;
+    }
+
+    public static int getSquare(String message) {
+        int square, root;
+        do {
+            square = Integer.parseInt(JOptionPane.showInputDialog(null, message));
+            root = Math.round((long) Math.sqrt(square));
+        } while (square != root * root);
+        return square;
+    }
+
+
+    public static int answer0or1(String message) {
+        int a;
+        do {
+            a = Integer.parseInt(JOptionPane.showInputDialog(null, message));
+        } while (a != 0 && a != 1);
+        return a;
+    }
+
+    public static double answerWithDouble(String message) {
+        double a;
+        do {
+            a = Double.parseDouble(JOptionPane.showInputDialog(null, message));
+        } while (a < 0 || a > 1);
+        return a;
     }
 }
