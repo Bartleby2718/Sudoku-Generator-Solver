@@ -65,12 +65,12 @@ public class Utils {
     }
 
     public static int askDimSamurai(int square) {
-        String message = "What is the dimension of this samurai sudoku?";
+        String message = "What is the dimension of the samurai sudoku?";
         int length, root;
         root = Math.round((long) Math.sqrt(square));
         do {
             length = Integer.parseInt(JOptionPane.showInputDialog(null, message));
-        } while (((length - root) / (square - root)) % 2 != 1);
+        } while (((length - root) % (square - root)) != 0 || ((length - root) / (square - root)) % 2 != 1);
         return length;
     }
 

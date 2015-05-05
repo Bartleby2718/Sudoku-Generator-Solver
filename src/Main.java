@@ -84,14 +84,15 @@ public class Main {
         int length, square, type;
         double clueProportion;
         type = Utils.answer0or1("Enter 0 if you want a regular sudoku.\nEnter 1 if you want a samurai sudoku.");
-        clueProportion = Utils.askProportion();
         isSamurai = (type == 1);
         if (!isSamurai) { // regular sudoku
-            square = Utils.askSquare("What is the length of the regular sudoku?\n(It must be a perfect square.)");
+            square = Utils.askSquare("What is the dimension of the regular sudoku?\n(It must be a perfect square.)");
+            clueProportion = Utils.askProportion();
             grid = SudokuGenerator.generateRegular(square, clueProportion);
         } else {// Samurai Sudoku
             square = Utils.askSquare("A samurai sudoku consists of several squares.\nHow many cells are there in each square?");
             length = Utils.askDimSamurai(square);
+            clueProportion = Utils.askProportion();
             grid = SudokuGenerator.generateSamurai(square, length, clueProportion);
         }
         JFrame frame = new JFrame(Utils.determineType(isSamurai) + " Sudoku Solver");
